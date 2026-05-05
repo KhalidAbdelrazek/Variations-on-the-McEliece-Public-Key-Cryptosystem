@@ -1,6 +1,6 @@
 import numpy as np
 
-class GF2m:
+class GF2m: # Galois Field of size
     def __init__(self, m, prim_poly):
         """
         Initialize the Galois Field GF(2^m).

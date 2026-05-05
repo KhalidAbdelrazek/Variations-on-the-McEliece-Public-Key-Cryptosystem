@@ -499,7 +499,7 @@ async function runISD() {
     return;
   }
 
-  const maxIter = parseInt(document.getElementById('isd-max-iter').value) || 5000;
+  const maxIter = parseInt(document.getElementById('isd-max-iter').value) /10 || 5000;
 
   setLoading('btn-isd', true, 'Running ISD Attack…');
   document.getElementById('isd-progress-wrap').classList.add('visible');
@@ -524,7 +524,7 @@ async function runISD() {
 
     buildTiles('isd-tiles', [
       { label: 'Status',     value: succeeded ? '✓ Found' : '✗ Failed', sub: d.status },
-      { label: 'Max iters',  value: maxIter },
+      { label: 'Max iters',  value: maxIter *10 },
       { label: 'Matches original', value: d.matches_original === null ? 'N/A' : (d.matches_original ? 'Yes ✓' : 'No ✗') },
     ]);
 
@@ -537,18 +537,18 @@ async function runISD() {
 
     const badgeMsg = succeeded
       ? (d.matches_original ? 'Attack succeeded — original message recovered!' : 'Attack found a valid message (no original to compare)')
-      : `Attack failed after ${maxIter} iterations`;
+      : `Attack failed after ${maxIter * 10}  iterations`;
     setResultBadge('isd-badge-wrap', succeeded, badgeMsg, badgeMsg);
 
     const termHtml =
       termSep("ISD Attack — Prange's Algorithm") +
-      termLine('Max iterations:', maxIter) +
+      termLine('Max iterations:', maxIter * 10) +
       termLine('Status:', d.status, succeeded ? 'term-success' : 'term-warn') +
       (succeeded ? (
         termLine('Recovered message:', shortBitsPlain(d.recovered_message)) +
         termLine('Matches original:', d.matches_original === null ? 'N/A' : String(d.matches_original),
                  d.matches_original ? 'term-success' : 'term-warn')
-      ) : termLine('Result:', `No valid information set found in ${maxIter} iterations.`, 'term-warn'));
+      ) : termLine('Result:', `No valid information set found in ${maxIter * 10} iterations.`, 'term-warn'));
 
     setTerminal('isd-terminal', termHtml);
     updateProgress();
