@@ -47,10 +47,7 @@ def hash_data(data, length):
     return np.array(bits[:length], dtype=int)
 
 
-# =========================================================
 # CCA2 ENCRYPTION
-# =========================================================
-
 def cca2_encrypt(message_bits, public_key):
     """
     c1 = r * G_pub + e
@@ -86,10 +83,7 @@ def cca2_encrypt(message_bits, public_key):
     return {'c1': c1, 'c2': c2}
 
 
-# =========================================================
 # CCA2 DECRYPTION
-# =========================================================
-
 def cca2_decrypt(ciphertext, private_key):
     """
     Verify integrity + recover message
