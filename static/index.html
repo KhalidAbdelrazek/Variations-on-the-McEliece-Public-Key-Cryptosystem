@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="Interactive web interface for the McEliece Public Key Cryptosystem — demonstrates key generation, encryption, decryption, CCA2 security, Niederreiter variant, and ISD attacks." />
+  <title>McEliece Cryptosystem UI</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+
+<body>
+
+  <!-- Decorative glows -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <!-- Toast container -->
+  <div id="toast-container"></div>
+
+  <!-- ══════════════════════════════════════════════════════
+     SIDEBAR
+     ══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+
+    <div class="sidebar-logo">
+      <div class="logo-badge">
+        <div class="logo-icon">🔐</div>
+        <div class="logo-text">
+          <div class="brand">McEliece UI</div>
+          <div class="sub">Code-Based Cryptography</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-progress">
+      <div class="progress-label">Workflow Progress</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="workflow-progress-bar"></div>
+      </div>
+      <div class="progress-steps-text" id="workflow-steps-text">0 / 5 steps completed</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Setup</div>
+      <button class="nav-item active" onclick="showPanel('init')" id="nav-init">
+        <span class="nav-icon">⚙️</span>
+        Initialization
+        <span class="nav-step-badge" id="badge-init">1</span>
+      </button>
+      <button class="nav-item" onclick="showPanel('keygen')" id="nav-keygen">
+        <span class="nav-icon">🗝️</span>
+        Key Generation
+        <span class="nav-step-badge" id="badge-keygen">2</span>
+      </button>
+
+      <div class="nav-section-label" style="margin-top:8px">Operations</div>
+      <button class="nav-item" onclick="showPanel('encdec')" id="nav-encdec">
+        <span class="nav-icon">🔄</span>
+        Encrypt / Decrypt
+        <span class="nav-step-badge" id="badge-encdec">3</span>
+      </button>
+      <button class="nav-item" onclick="showPanel('cca2')" id="nav-cca2">
+        <span class="nav-icon">🛡️</span>
+        CCA2 Security
+        <span class="nav-step-badge" id="badge-cca2">4</span>
+      </button>
+      <!-- <button class="nav-item" onclick="showPanel('niederreiter')" id="nav-niederreiter">
+      <span class="nav-icon">📡</span>
+      Niederreiter Variant
+      <span class="nav-step-badge" id="badge-niederreiter">5</span>
+    </button> -->
+
+      <div class="nav-section-label" style="margin-top:8px">Security Analysis</div>
+      <button class="nav-item" onclick="showPanel('isd')" id="nav-isd">
+        <span class="nav-icon">⚔️</span>
+        ISD Attack
+        <span class="nav-step-badge" id="badge-isd">6</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="system-status">
+        <div class="status-dot" id="system-dot"></div>
+        <span id="system-status-text">Not initialized</span>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ══════════════════════════════════════════════════════
+     MAIN CONTENT
+     ══════════════════════════════════════════════════════ -->
+  <div class="main-wrap">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1>McEliece Public Key Cryptosystem</h1>
+        <p>Code-based post-quantum cryptography — interactive demonstration</p>
+      </div>
+      <div class="topbar-right">
+        <div class="pill-badge" id="topbar-state-badge">
+          <span>🔴</span> System Offline
+        </div>
+      </div>
+    </header>
+
+    <!-- Scrollable content -->
+    <main class="content">
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 1 — INITIALIZATION
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel active" id="panel-init">
+        <div class="panel-header">
+          <div class="step-chip">⚙️ Step 1 of 6</div>
+          <h2>System Initialization</h2>
+          <p>Configure the finite field GF(2<sup>m</sup>) and binary Goppa code parameters that underpin the entire
+            cryptosystem.</p>
+        </div>
+
+        <div class="alert alert-info">
+          <span class="alert-icon">💡</span>
+          <span>Default values use toy parameters for fast demonstration (<code>m=4, prim_poly=19, t=2, n=15</code>).
+            Real-world systems use much larger parameters.</span>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Field &amp; Code Parameters</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="init-m">m — Field exponent (GF(2<sup>m</sup>))</label>
+              <input type="number" id="init-m" value="8" min="2" max="16" placeholder="4" />
+              <div class="input-hint">Field size will be 2<sup>m</sup> elements</div>
+            </div>
+            <div class="form-group">
+              <label for="init-prim-poly">Primitive Polynomial (decimal)</label>
+              <input type="number" id="init-prim-poly" value="285" placeholder="19" />
+              <div class="input-hint">e.g. 19 = x⁴+x+1 for m=4</div>
+            </div>
+            <div class="form-group">
+              <label for="init-t">t — Error-correction capability</label>
+              <input type="number" id="init-t" value="8" min="1" max="10" placeholder="2" />
+              <div class="input-hint">Corrects up to t errors per codeword</div>
+            </div>
+            <div class="form-group">
+              <label for="init-n">n — Code length</label>
+              <input type="number" id="init-n" value="255" min="4" max="4096" placeholder="15" />
+              <div class="input-hint">Must be ≤ 2<sup>m</sup></div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-init" onclick="runInit()">
+              ⚙️ Initialize System
+            </button>
+            <button class="btn btn-ghost" onclick="resetDefaults()">↺ Reset Defaults</button>
+          </div>
+        </div>
+
+        <div id="init-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Initialization Results</div>
+            <div class="info-tiles" id="init-tiles"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span></span><span></span><span></span>
+              </div>
+              <div class="terminal-title">system_output.log</div>
+            </div>
+            <div class="terminal-body" id="init-terminal">Waiting for output…</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 2 — KEY GENERATION
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel" id="panel-keygen">
+        <div class="panel-header">
+          <div class="step-chip">🗝️ Step 2 of 6</div>
+          <h2>Key Generation</h2>
+          <p>Generate the public/private key pair: public key G<sub>pub</sub> = S·G·P and the private key components (S,
+            G, P, Goppa code).</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Generate McEliece Key Pair</div>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+            A random scrambler matrix <strong>S</strong>, generator matrix <strong>G</strong>, and permutation matrix
+            <strong>P</strong> are combined to produce the obfuscated public key.
+          </p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-keygen" onclick="runKeygen()">
+              🗝️ Generate Keys
+            </button>
+          </div>
+        </div>
+
+        <div id="keygen-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Key Pair Details</div>
+            <div class="info-tiles" id="keygen-tiles"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots"><span></span><span></span><span></span></div>
+              <div class="terminal-title">key_generation.log</div>
+            </div>
+            <div class="terminal-body" id="keygen-terminal"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 3 — ENCRYPT / DECRYPT
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel" id="panel-encdec">
+        <div class="panel-header">
+          <div class="step-chip">🔄 Step 3 of 6</div>
+          <h2>Encryption &amp; Decryption</h2>
+          <p>Encrypt a k-bit binary message with the public key (adding a random error vector), then decrypt using the
+            private key and Goppa decoder.</p>
+        </div>
+
+        <!-- Encryption card -->
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Encryption</div>
+          <div class="form-group">
+            <label for="enc-message">Binary Message (k bits)</label>
+            <input type="text" id="enc-message" placeholder="Leave empty for auto-generated random message…" />
+            <div class="input-hint" id="enc-hint">System must be initialized first to know k.</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-encrypt" onclick="runEncrypt()">
+              🔒 Encrypt
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="autoFillMessage()">🎲 Random Message</button>
+          </div>
+        </div>
+
+        <div id="enc-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Encryption Output</div>
+            <div class="info-tiles" id="enc-tiles"></div>
+            <div class="section-divider"></div>
+            <div style="margin-bottom:10px">
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Error Vector e</div>
+              <div class="binary-display" id="enc-error-vec"></div>
+            </div>
+            <div>
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Ciphertext c</div>
+              <div class="binary-display" id="enc-ciphertext"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decryption card -->
+        <div class="card" style="margin-top:8px">
+          <div class="card-title"><span class="dot"></span>Decryption</div>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+            Decrypts the last encrypted ciphertext using the private key. Run Encrypt first.
+          </p>
+          <div class="btn-row">
+            <button class="btn btn-success" id="btn-decrypt" onclick="runDecrypt()">
+              🔓 Decrypt
+            </button>
+          </div>
+        </div>
+
+        <div id="dec-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Decryption Output</div>
+            <div style="margin-bottom:10px">
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Decrypted Message m'</div>
+              <div class="binary-display" id="dec-message"></div>
+            </div>
+            <div id="dec-badge-wrap"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots"><span></span><span></span><span></span></div>
+              <div class="terminal-title">encryption.log</div>
+            </div>
+            <div class="terminal-body" id="encdec-terminal"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 4 — CCA2 SECURITY
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel" id="panel-cca2">
+        <div class="panel-header">
+          <div class="step-chip">🛡️ Step 4 of 6</div>
+          <h2>CCA2 / IND-CCA2 Security</h2>
+          <p>Demonstrates the semantic security extension: encrypts a message of <em>arbitrary</em> length using a
+            hash-based transformation (c₁, c₂) providing chosen-ciphertext attack resistance.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>CCA2 Encryption</div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="cca2-message">Binary Message (any length)</label>
+              <input type="text" id="cca2-message" placeholder="e.g. 10110100 (or empty for random)" />
+              <div class="input-hint">Can be any bit-length — not limited to k</div>
+            </div>
+            <div class="form-group">
+              <label for="cca2-length">Auto-generate length</label>
+              <input type="number" id="cca2-length" value="10" min="1" max="64" />
+              <div class="input-hint">Used when message field is empty</div>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-cca2" onclick="runCCA2()">
+              🛡️ Run CCA2 Encrypt+Decrypt
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="autoFillCCA2()">🎲 Random</button>
+          </div>
+        </div>
+
+        <div id="cca2-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>CCA2 Results</div>
+            <div class="info-tiles" id="cca2-tiles"></div>
+            <div class="section-divider"></div>
+            <div class="grid-2">
+              <div>
+                <div
+                  style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                  Ciphertext c₁</div>
+                <div class="binary-display" id="cca2-c1"></div>
+              </div>
+              <div>
+                <div
+                  style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                  Ciphertext c₂ (masked message)</div>
+                <div class="binary-display" id="cca2-c2"></div>
+              </div>
+            </div>
+            <div id="cca2-badge-wrap" style="margin-top:12px"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots"><span></span><span></span><span></span></div>
+              <div class="terminal-title">cca2_security.log</div>
+            </div>
+            <div class="terminal-body" id="cca2-terminal"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 5 — NIEDERREITER
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel" id="panel-niederreiter">
+        <div class="panel-header">
+          <div class="step-chip">📡 Step 5 of 6</div>
+          <h2>Niederreiter Variant</h2>
+          <p>A dual formulation using the parity-check matrix H as the public key. The "message" is an error vector; the
+            ciphertext is its syndrome — achieving a <em>shorter</em> ciphertext (n−k bits vs n bits).</p>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Niederreiter Encryption &amp; Decryption</div>
+          <p style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">
+            Generates fresh Niederreiter keys, encrypts a random weight-t error vector as the message, then decrypts and
+            verifies.
+          </p>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-niederreiter" onclick="runNiederreiter()">
+              📡 Run Niederreiter
+            </button>
+          </div>
+        </div>
+
+        <div id="niederreiter-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Niederreiter Results</div>
+            <div class="info-tiles" id="nied-tiles"></div>
+            <div class="section-divider"></div>
+            <div>
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Syndrome (Ciphertext)</div>
+              <div class="binary-display" id="nied-syndrome"></div>
+            </div>
+            <div style="margin-top:12px">
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Original Error Vector e</div>
+              <div class="binary-display" id="nied-error-orig"></div>
+            </div>
+            <div style="margin-top:12px">
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Decrypted Error Vector e'</div>
+              <div class="binary-display" id="nied-error-dec"></div>
+            </div>
+            <div id="nied-badge-wrap" style="margin-top:12px"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots"><span></span><span></span><span></span></div>
+              <div class="terminal-title">niederreiter.log</div>
+            </div>
+            <div class="terminal-body" id="nied-terminal"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+         PANEL 6 — ISD ATTACK
+         ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+      <section class="panel" id="panel-isd">
+        <div class="panel-header">
+          <div class="step-chip">⚔️ Step 6 of 6</div>
+          <h2>ISD Attack (Prange's Algorithm)</h2>
+          <p>Simulates a cryptanalytic attack on the last ciphertext using <em>Information Set Decoding</em>. Randomly
+            guesses error-free information sets hoping to recover the original message.</p>
+        </div>
+
+        <div class="alert alert-warn">
+          <span class="alert-icon">⚠️</span>
+          <span>This attack runs server-side and may take several seconds. With toy parameters (n=15, t=2), it usually
+            succeeds within ~5000 iterations.</span>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span class="dot"></span>Attack Configuration</div>
+          <div class="form-group" style="max-width:280px">
+            <label for="isd-max-iter">Maximum Iterations</label>
+            <input type="number" id="isd-max-iter" value="10" min="100" max="100000" step="100" />
+            <div class="input-hint">Higher = better chance of success, slower</div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-danger" id="btn-isd" onclick="runISD()">
+              ⚔️ Launch ISD Attack
+            </button>
+          </div>
+
+          <!-- ISD progress -->
+          <div class="isd-progress-wrap" id="isd-progress-wrap">
+            <div style="font-size:12px;color:var(--text-muted)">Running Prange's algorithm…</div>
+            <div class="isd-progress-bar">
+              <div class="isd-progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="isd-result" style="display:none">
+          <div class="card">
+            <div class="card-title"><span class="dot"></span>Attack Results</div>
+            <div class="info-tiles" id="isd-tiles"></div>
+            <div id="isd-recovered-wrap" style="display:none;margin-top:14px">
+              <div
+                style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">
+                Recovered Message</div>
+              <div class="binary-display" id="isd-recovered-msg"></div>
+            </div>
+            <div id="isd-badge-wrap" style="margin-top:12px"></div>
+          </div>
+          <div class="terminal">
+            <div class="terminal-header">
+              <div class="terminal-dots"><span></span><span></span><span></span></div>
+              <div class="terminal-title">isd_attack.log</div>
+            </div>
+            <div class="terminal-body" id="isd-terminal"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+
+</html>
