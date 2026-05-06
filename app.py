@@ -21,11 +21,11 @@ from encryption import encrypt
 from decryption import decrypt
 from semantic_security import cca2_encrypt, cca2_decrypt
 from isd_attack import isd_attack
-from shortened_ciphertext import (
-    generate_niederreiter_keys,
-    encrypt_shortened,
-    decrypt_shortened,
-)
+# from shortened_ciphertext import (
+#     generate_niederreiter_keys,
+#     encrypt_shortened,
+#     decrypt_shortened,
+# )
 
 # ─── App setup ───────────────────────────────────────────────────────────────
 app = Flask(__name__, static_folder="static", static_url_path="/static")
@@ -270,36 +270,36 @@ def api_cca2():
         return err(str(e))
 
 
-# ─── /api/niederreiter ───────────────────────────────────────────────────────
+# # ─── /api/niederreiter ───────────────────────────────────────────────────────
 
-@app.route("/api/niederreiter", methods=["POST"])
-def api_niederreiter():
-    if state["goppa"] is None:
-        return err("System not initialized. Call /api/init first.")
+# @app.route("/api/niederreiter", methods=["POST"])
+# def api_niederreiter():
+#     if state["goppa"] is None:
+#         return err("System not initialized. Call /api/init first.")
 
-    try:
-        nied_pub, nied_priv = generate_niederreiter_keys(state["goppa"])
-        nied_c, nied_e = encrypt_shortened(nied_pub)
-        nied_dec_e = decrypt_shortened(nied_c, nied_priv)
-        success = bool(np.array_equal(nied_e, nied_dec_e))
+#     try:
+#         nied_pub, nied_priv = generate_niederreiter_keys(state["goppa"])
+#         nied_c, nied_e = encrypt_shortened(nied_pub)
+#         nied_dec_e = decrypt_shortened(nied_c, nied_priv)
+#         success = bool(np.array_equal(nied_e, nied_dec_e))
 
-        return ok({
-            "message": "Niederreiter variant completed.",
-            "details": {
-                "h_pub_shape": list(nied_pub["H_pub"].shape),
-                "syndrome_length": len(nied_c),
-                "syndrome": to_list(nied_c),
-                "syndrome_str": "".join(str(b) for b in nied_c.tolist()),
-                "original_error_vector": to_list(nied_e),
-                "original_error_str": "".join(str(b) for b in nied_e.tolist()),
-                "decrypted_error_vector": to_list(nied_dec_e),
-                "decrypted_error_str": "".join(str(b) for b in nied_dec_e.tolist()),
-                "decryption_match": success,
-                "result": "SUCCESS ✓" if success else "FAILED ✗",
-            },
-        })
-    except Exception as e:
-        return err(str(e))
+#         return ok({
+#             "message": "Niederreiter variant completed.",
+#             "details": {
+#                 "h_pub_shape": list(nied_pub["H_pub"].shape),
+#                 "syndrome_length": len(nied_c),
+#                 "syndrome": to_list(nied_c),
+#                 "syndrome_str": "".join(str(b) for b in nied_c.tolist()),
+#                 "original_error_vector": to_list(nied_e),
+#                 "original_error_str": "".join(str(b) for b in nied_e.tolist()),
+#                 "decrypted_error_vector": to_list(nied_dec_e),
+#                 "decrypted_error_str": "".join(str(b) for b in nied_dec_e.tolist()),
+#                 "decryption_match": success,
+#                 "result": "SUCCESS ✓" if success else "FAILED ✗",
+#             },
+#         })
+#     except Exception as e:
+#         return err(str(e))
 
 
 # ─── /api/isd ────────────────────────────────────────────────────────────────

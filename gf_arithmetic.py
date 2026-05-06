@@ -8,7 +8,7 @@ class GF2m: # Galois Field of size
         :param prim_poly: Primitive polynomial in integer representation (e.g., x^4 + x + 1 is 19).
         """
         self.m = m
-        self.size = 1 << m
+        self.size = 1 << m 
         self.prim_poly = prim_poly
 
         self.exp_table = [0] * (self.size * 2)
@@ -55,7 +55,7 @@ class GF2m: # Galois Field of size
             return 1
         return self.exp_table[(self.log_table[a] * p) % (self.size - 1)]
 
-    def poly_add(self, p1, p2):
+    def poly_add(self, p1, p2): 
         max_len = max(len(p1), len(p2))
         res = [0] * max_len
         for i in range(len(p1)):
@@ -197,6 +197,10 @@ class GF2m: # Galois Field of size
     def poly_eval(self, p, x):
         """
         Evaluate polynomial p at x using Horner's method.
+        In a standard polynomial evaluation, calculating x^n is expensive.
+        For example, x^4 requires x*x*x*x . 
+        If you have a high-degree polynomial, a computer has to perform a massive number of multiplications.
+        [1,0,0,1] evaluated at x = 2 is 1x^3 + 0x^2 + 0x^1 + 1x^0 = 5
         """
         res = 0
         for i in range(len(p)-1, -1, -1):

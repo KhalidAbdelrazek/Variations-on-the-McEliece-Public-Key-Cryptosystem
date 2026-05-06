@@ -19,7 +19,7 @@ def main():
     m = 4 # GF(2^4)
     prim_poly = 19 # x^4 + x + 1 primitive polynomial
     t = 2 # Error correcting capability
-    n = 15 # Code length (usually 2^m, but we use 2^m - 1 or less depending on irreducible poly roots)
+    n = 15 # Code length 
     
     print_separator("1. Initialization")
     print(f"Initializing GF(2^{m}) and Goppa Code with t={t}, n={n}")
